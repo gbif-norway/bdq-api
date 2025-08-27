@@ -19,6 +19,19 @@ COPY .mvn.settings.xml /root/.m2/settings.xml
 # Copy source code  
 COPY src src
 
+# Ensure submodule content is present when building in environments
+# that don't automatically init Git submodules (e.g., Cloud Build).
+# If the lib modules already exist (local builds), this is a no-op.
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/* \
+ && set -eux; \
+   for mod in sci_name_qc geo_ref_qc event_date_qc rec_occur_qc; do \
+     if [ ! -f "lib/$mod/pom.xml" ]; then \
+       echo "Fetching $mod submodule"; \
+       rm -rf "lib/$mod"; \
+       git clone --depth 1 "https://github.com/FilteredPush/$mod.git" "lib/$mod"; \
+     fi; \
+   done
+
 # Build and install FilteredPush libraries first (networked resolves)
 RUN mvn -B -ntp -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true \
     -Dgit-commit-id.skip=true -Dgit.commit.id.skip=true -Dgit-commit-id.failOnNoGitDirectory=false \
