@@ -1,6 +1,6 @@
 # BDQ API
 
-REST API wrapper for [FilteredPush](https://github.com/FilteredPush) biodiversity data quality validation libraries. FilteredPush provides implementations of BDQ (Biodiversity Data Quality) Tests via the FFDQ API. This API uses those libraries directly (no custom reimplementation), mapping their responses into a simple JSON shape for convenience. The BDQ standard defines a library of Tests documented in `TG2_tests.csv`.
+REST API wrapper for [FilteredPush](https://github.com/FilteredPush) biodiversity data quality validation libraries. FilteredPush provides implementations of BDQ (Biodiversity Data Quality) Tests via the FFDQ API. This API uses those libraries directly (no custom reimplementation), mapping their responses into a simple JSON shape for convenience. The BDQ standard defines a library of Tests documented in the TDWG BDQ repository, extracted here is`TG2_tests.csv`.
 
 ## Overview
 
