@@ -96,12 +96,13 @@ Response (order preserved):
 ```json
 [
   { "status": "RUN_HAS_RESULT", "result": "COMPLIANT", "comment": "..." },
-  { "status": "AMENDED", "result": "1880-05-08", "comment": "..." }
+  { "status": "AMENDED", "result": "dwc:eventDate=1880-05-08", "comment": "..." }
 ]
 ```
 
 Notes:
 - The server runs items concurrently with a small bounded thread pool and is gentle on external services.
+- Amendment results are formatted as `key=value` pairs joined by `|` for multi-field amendments (e.g., `dwc:minimumDepthInMeters=3.048|dwc:maximumDepthInMeters=3.048`). Single-field amendments use the same `key=value` format.
 - If an item fails (e.g., unknown id), its entry contains `status` = `INTERNAL_PREREQUISITES_NOT_MET` and an explanatory `comment`; other items still complete.
 
 **Result values:**
