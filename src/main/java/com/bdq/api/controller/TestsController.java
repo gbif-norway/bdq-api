@@ -37,6 +37,43 @@ public class TestsController {
     @PostMapping("/run")
     @Operation(summary = "Run a test by BDQ label or GUID with provided parameters")
     public ValidationResponse runTest(@RequestBody RunTestRequest req) throws Exception {
+        return runSingle(req);
+    }
+
+    @PostMapping("/run/batch")
+    @Operation(summary = "Run multiple tests; returns results in input order")
+    public List<ValidationResponse> runBatch(@RequestBody List<RunTestRequest> requests) throws Exception {
+        if (requests == null) return Collections.emptyList();
+
+        int size = requests.size();
+        if (size == 0) return Collections.emptyList();
+
+        int maxThreads = Math.min(Math.max(Runtime.getRuntime().availableProcessors(), 2), 8);
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(maxThreads);
+        try {
+            List<java.util.concurrent.CompletableFuture<ValidationResponse>> futures = new ArrayList<>(size);
+            for (RunTestRequest r : requests) {
+                futures.add(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return runSingle(r);
+                    } catch (Exception e) {
+                        // Do not fail whole batch; map error to a response shape
+                        String msg = (e.getMessage() != null) ? e.getMessage() : e.getClass().getSimpleName();
+                        return new ValidationResponse("INTERNAL_PREREQUISITES_NOT_MET", "", msg);
+                    }
+                }, pool));
+            }
+            List<ValidationResponse> out = new ArrayList<>(size);
+            for (java.util.concurrent.CompletableFuture<ValidationResponse> f : futures) {
+                out.add(f.join());
+            }
+            return out;
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    private ValidationResponse runSingle(RunTestRequest req) throws Exception {
         if (req == null || req.getId() == null || req.getId().isEmpty()) {
             throw new BadRequest("Missing id (BDQ label or GUID)");
         }
