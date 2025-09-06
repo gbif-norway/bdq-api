@@ -55,6 +55,7 @@ Interactive API documentation is available at:
 
 - `GET /api/v1/tests` — List discovered BDQ tests from FilteredPush libraries.
 - `POST /api/v1/tests/run` — Run a test by BDQ label or GUID, providing parameters as a map.
+- `POST /api/v1/tests/run/batch` — Run multiple tests. Body is an array of `{ id, params }`. Returns an array of results in the same order. Errors for individual items are captured in that item's `comment` with `status` set to `INTERNAL_PREREQUISITES_NOT_MET`.
 
 ## Response Format
 
@@ -76,6 +77,32 @@ All endpoints return a consistent response format:
 - `EXTERNAL_PREREQUISITES_NOT_MET` - External service unavailable
 - `INTERNAL_PREREQUISITES_NOT_MET` - Input missing/invalid for the test
 - `AMBIGUOUS` - Inputs produce ambiguous outcome (no amendment)
+
+## Batch Execution
+
+`POST /api/v1/tests/run/batch`
+
+Request:
+
+```json
+[
+  { "id": "VALIDATION_COUNTRYCODE_VALID", "params": { "dwc:countryCode": "US" } },
+  { "id": "AMENDMENT_EVENTDATE_STANDARDIZED", "params": { "dwc:eventDate": "8 May 1880" } }
+]
+```
+
+Response (order preserved):
+
+```json
+[
+  { "status": "RUN_HAS_RESULT", "result": "COMPLIANT", "comment": "..." },
+  { "status": "AMENDED", "result": "1880-05-08", "comment": "..." }
+]
+```
+
+Notes:
+- The server runs items concurrently with a small bounded thread pool and is gentle on external services.
+- If an item fails (e.g., unknown id), its entry contains `status` = `INTERNAL_PREREQUISITES_NOT_MET` and an explanatory `comment`; other items still complete.
 
 **Result values:**
 - `COMPLIANT` - Passes validation
