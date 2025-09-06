@@ -91,6 +91,27 @@ class TestsControllerIT {
         assertNotNull(resp.getBody());
         assertEquals("AMENDED", resp.getBody().getStatus());
         assertNotNull(resp.getBody().getResult());
+        assertTrue(resp.getBody().getResult().startsWith("dwc:eventDate="));
         assertTrue(resp.getBody().getResult().contains("1880-05-08"));
+    }
+
+    @Test
+    void runSingle_amendmentMultiField_formatsAsPipes() {
+        RunTestRequest body = new RunTestRequest();
+        body.setId("AMENDMENT_MINDEPTHMAXDEPTH_FROM_VERBATIM");
+        Map<String,String> params = new HashMap<>();
+        params.put("dwc:verbatimDepth", "10 feet");
+        body.setParams(params);
+
+        ResponseEntity<ValidationResponse> resp = rest.postForEntity(url("/api/v1/tests/run"), body, ValidationResponse.class);
+        assertEquals(HttpStatus.OK, resp.getStatusCode());
+        assertNotNull(resp.getBody());
+        assertTrue(Set.of("AMENDED","FILLED_IN").contains(resp.getBody().getStatus()));
+        String r = resp.getBody().getResult();
+        assertNotNull(r);
+        assertTrue(r.contains("dwc:minimumDepthInMeters=3.048"));
+        assertTrue(r.contains("dwc:maximumDepthInMeters=3.048"));
+        assertTrue(r.contains("|"));
+        assertFalse(r.contains(" | "));
     }
 }
